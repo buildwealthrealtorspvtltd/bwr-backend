@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 const path = require('path');
+const dns = require('dns');
+
+dns.setDefaultResultOrder('ipv4first');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 // dotenv v17+ uses populateProcessEnv
 const { config } = require('dotenv');
@@ -27,7 +31,7 @@ async function promoteToAdmin() {
     await mongoose.connect(MONGO_URI);
     console.log('✅ Connected to DB');
 
-    const email = 'it.buildwealthrealtors@gmail.com';
+    const email = 'it@buildwealthrealtors.com';
 
     // Check if user exists
     const existing = await User.findOne({ email });

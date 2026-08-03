@@ -5,9 +5,8 @@ import { env } from '../../config/env';
 const cookieOptions = {
   httpOnly: true,
   path: '/', // ⚠️ CRITICAL: Must be "/" for the entire site
-  domain: env.NODE_ENV === 'production' ? '.buildwealthrealtors.com' : undefined,
-  secure: env.NODE_ENV === 'production',
-  sameSite: env.NODE_ENV === 'production' ? ('none' as const) : ('lax' as const),
+  secure: true,
+  sameSite: 'none' as const,
 };
 
 export const setAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {

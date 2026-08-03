@@ -35,11 +35,10 @@ const allowedOrigins = [
   rawClientUrl,
   rawClientUrl.replace('https://', 'https://www.'),
   rawClientUrl.replace('http://', 'http://www.'),
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5000',
 ];
-
-if (env.NODE_ENV !== 'production') {
-  allowedOrigins.push('http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000');
-}
 
 app.use(
   cors({
