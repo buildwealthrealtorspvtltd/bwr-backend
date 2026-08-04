@@ -67,11 +67,12 @@ export const googleAuth = async (req: Request, res: Response) => {
     });
 
     await saveRefreshToken(user._id.toString(), refreshToken);
-    setAuthCookies(res, accessToken, refreshToken);
+    setAuthCookies(res, accessToken, refreshToken, req);
 
     return res.status(200).json({
       message: 'Google login successful',
       user: { id: user._id, name: user.name, role: user.role },
+      accessToken,
     });
   } catch (error: any) {
     console.error('Google Auth Error:', error);

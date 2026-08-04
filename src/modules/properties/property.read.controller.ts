@@ -57,17 +57,22 @@ function buildPropertyFilter(params: z.infer<typeof searchQuerySchema>): Record<
     filter.$text = { $search: params.q };
   }
 
-  // Property type — supports comma-separated list for multi-select
+  // Property type — matches either category OR propertyType (e.g. RESIDENTIAL, COMMERCIAL, LAND)
   if (params.propertyType) {
     const types = params.propertyType
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean);
-    if (types.length === 1) {
-      filter.propertyType = types[0];
-    } else if (types.length > 1) {
-      filter.propertyType = { $in: types };
-    }
+
+    const expandedTypes = types.flatMap((t) => {
+      if (t === 'LAND') return ['LAND', 'LAND_PLOT', 'RESIDENTIAL_PLOT', 'COMMERCIAL_LAND'];
+      return [t];
+    });
+
+    filter.$or = [
+      { propertyType: { $in: expandedTypes } },
+      { category: { $in: expandedTypes } },
+    ];
   }
 
   if (params.propertySubType) {
@@ -84,17 +89,23 @@ function buildPropertyFilter(params: z.infer<typeof searchQuerySchema>): Record<
     filter['location.city'] = params.city;
   }
 
-  // isHot match
+  // isHot match — DB schema field name is isHotProperty
   if (params.isHot !== undefined) {
-    filter.isHot = params.isHot === 'true';
+    filter.isHotProperty = params.isHot === 'true';
   }
 
-  // Price range
+  // Price range — queries pricing.totalPrice or pricing.monthlyRent
   if (params.minPrice !== undefined || params.maxPrice !== undefined) {
     const priceFilter: { $gte?: number; $lte?: number } = {};
     if (params.minPrice !== undefined) priceFilter.$gte = params.minPrice;
     if (params.maxPrice !== undefined) priceFilter.$lte = params.maxPrice;
-    filter.price = priceFilter;
+    
+    const currentOr = (filter.$or as Record<string, unknown>[]) || [];
+    filter.$or = [
+      ...currentOr,
+      { 'pricing.totalPrice': priceFilter },
+      { 'pricing.monthlyRent': priceFilter },
+    ];
   }
 
   return filter;

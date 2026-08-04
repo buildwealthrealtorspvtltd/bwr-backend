@@ -1,37 +1,66 @@
-import { Response } from 'express';
-import { env } from '../../config/env';
+import { Request, Response } from 'express';
 
-// 1. Define the rules ONCE — uses validated env instead of raw process.env (HIGH-006)
-const cookieOptions = {
-  httpOnly: true,
-  path: '/', // ⚠️ CRITICAL: Must be "/" for the entire site
-  secure: true,
-  sameSite: 'none' as const,
+/**
+ * Dynamic Origin-Aware Cookie Configuration Strategy
+ * 
+ * 1. LOCAL DEV (http://localhost:3000 or http://127.0.0.1:3000):
+ *    Sets `secure: false` & `sameSite: 'lax'`.
+ *    Prevents modern browsers (Chrome/Edge) from discarding cookies over unencrypted HTTP.
+ * 
+ * 2. PRODUCTION HOSTING (https://buildwealthrealtors.com):
+ *    Sets `secure: true` & `sameSite: 'none'`.
+ *    Guarantees IETF RFC 6265bis cross-site HttpOnly cookie compliance over HTTPS.
+ */
+export const getCookieOptions = (req?: Request) => {
+  const origin = req?.headers?.origin || req?.headers?.referer || '';
+  const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
+
+  if (isLocalhost) {
+    return {
+      httpOnly: true,
+      path: '/',
+      secure: false,
+      sameSite: 'lax' as const,
+    };
+  }
+
+  return {
+    httpOnly: true,
+    path: '/',
+    secure: true,
+    sameSite: 'none' as const,
+  };
 };
 
-export const setAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {
-  // Set Access Token (15 min)
+export const setAuthCookies = (
+  res: Response,
+  accessToken: string,
+  refreshToken: string,
+  req?: Request,
+) => {
+  const options = getCookieOptions(req);
+
   res.cookie('accessToken', accessToken, {
-    ...cookieOptions,
-    maxAge: 15 * 60 * 1000,
+    ...options,
+    maxAge: 15 * 60 * 1000, // 15 mins
   });
 
-  // Set Refresh Token (7 days)
   res.cookie('refreshToken', refreshToken, {
-    ...cookieOptions,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    ...options,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 };
 
-export const clearAuthCookies = (res: Response) => {
-  // 2. Clear cookies using the EXACT SAME options
+export const clearAuthCookies = (res: Response, req?: Request) => {
+  const options = getCookieOptions(req);
+
   res.cookie('accessToken', '', {
-    ...cookieOptions,
-    maxAge: 0, // Expire immediately
+    ...options,
+    maxAge: 0,
   });
 
   res.cookie('refreshToken', '', {
-    ...cookieOptions,
+    ...options,
     maxAge: 0,
   });
 };

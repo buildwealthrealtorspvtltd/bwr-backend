@@ -90,7 +90,7 @@ export const registerUser = async (req: Request, res: Response) => {
     });
 
     await saveRefreshToken(user._id.toString(), refreshToken);
-    setAuthCookies(res, accessToken, refreshToken);
+    setAuthCookies(res, accessToken, refreshToken, req);
 
     return res.status(201).json({
       message: 'Registered successfully',
@@ -156,7 +156,7 @@ export const login = async (req: Request, res: Response) => {
     });
 
     await saveRefreshToken(user._id.toString(), refreshToken);
-    setAuthCookies(res, accessToken, refreshToken);
+    setAuthCookies(res, accessToken, refreshToken, req);
 
     // Audit: Record successful login
     logAudit({
@@ -173,6 +173,7 @@ export const login = async (req: Request, res: Response) => {
     return res.json({
       message: 'Login successful',
       user: { id: user._id, name: user.name, role: user.role },
+      accessToken,
     });
   } catch {
     return res.status(500).json({ message: 'Something went wrong' });
@@ -218,7 +219,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     });
 
     await saveRefreshToken(user._id.toString(), newRefreshToken);
-    setAuthCookies(res, newAccessToken, newRefreshToken);
+    setAuthCookies(res, newAccessToken, newRefreshToken, req);
 
     return res.json({ message: 'Token refreshed' });
   } catch {
@@ -257,7 +258,7 @@ export const logout = async (req: Request, res: Response) => {
     // DB error — still clear cookies
   }
 
-  clearAuthCookies(res);
+  clearAuthCookies(res, req);
   return res.status(200).json({ message: 'Logged out successfully' });
 };
 

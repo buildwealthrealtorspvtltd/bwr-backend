@@ -61,7 +61,11 @@ app.use(
 );
 
 // Security Middleware
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+  }),
+);
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // Body parser limits
@@ -103,6 +107,16 @@ app.use('/api/v1/team-members', teamRoutes);
 app.use('/api/v1/contact', contactRoutes);
 app.use('/api/v1/audit-logs', auditRoutes);
 app.use('/api/v1/reels', reelRoutes);
+
+// Root landing endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Build Wealth Realtors (BWR) REST API Server Running',
+    health: '/api/health',
+    version: 'v1',
+  });
+});
 
 // Health check endpoint — MUST return 200 to prevent Passenger/LiteSpeed 503 false positives
 app.get('/api/health', (req, res) => {
