@@ -24,11 +24,14 @@ export const getCookieOptions = (req?: Request) => {
     };
   }
 
+  // Production (buildwealthrealtors.com & api.buildwealthrealtors.com)
+  // Shared domain allows cPanel Next.js proxy.ts and Render Express backend to share session cookies seamlessly
   return {
     httpOnly: true,
     path: '/',
     secure: true,
     sameSite: 'none' as const,
+    domain: '.buildwealthrealtors.com',
   };
 };
 

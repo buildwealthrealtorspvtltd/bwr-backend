@@ -2,11 +2,19 @@ import nodemailer from 'nodemailer';
 import { env } from '../config/env';
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // TLS via STARTTLS (Port 587) - Compatible with Render Cloud egress rules
   auth: {
     user: env.SMTP_EMAIL,
     pass: env.SMTP_PASSWORD,
   },
+  tls: {
+    rejectUnauthorized: false,
+  },
+  connectionTimeout: 8000, // 8s connection timeout
+  greetingTimeout: 8000,   // 8s greeting timeout
+  socketTimeout: 10000,    // 10s socket timeout
 });
 
 export const sendOTPEmail = async (email: string, otp: string) => {

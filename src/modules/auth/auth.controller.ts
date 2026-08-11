@@ -95,6 +95,7 @@ export const registerUser = async (req: Request, res: Response) => {
     return res.status(201).json({
       message: 'Registered successfully',
       user: { id: user._id, name: user.name, role: user.role },
+      accessToken,
     });
   } catch (error: unknown) {
     if (
@@ -288,11 +289,15 @@ export const sendVerificationOTP = async (req: Request, res: Response) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    // Send using nodemailer Google Workspace transporter
-    await sendOTPEmail(email, code);
+    console.log(`[OTP DISPATCH]: Email: ${email} | Code: ${code}`);
 
-    if (env.NODE_ENV === 'development') {
-      console.log(`[DEV OTP]: The OTP for ${email} is ${code}`);
+    try {
+      await sendOTPEmail(email, code);
+    } catch (emailErr) {
+      console.error('⚠️ [SMTP Warning] Failed to dispatch OTP email via Gmail SMTP:', emailErr);
+      if (env.NODE_ENV !== 'development') {
+        throw emailErr;
+      }
     }
 
     return res.status(200).json({ message: 'Verification OTP sent successfully!' });
