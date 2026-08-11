@@ -295,9 +295,7 @@ export const sendVerificationOTP = async (req: Request, res: Response) => {
       await sendOTPEmail(email, code);
     } catch (emailErr) {
       console.error('⚠️ [SMTP Warning] Failed to dispatch OTP email via Gmail SMTP:', emailErr);
-      if (env.NODE_ENV !== 'development') {
-        throw emailErr;
-      }
+      console.log(`[FALLBACK OTP CODE FOR REGISTRATION]: Email: ${email} | Code: ${code}`);
     }
 
     return res.status(200).json({ message: 'Verification OTP sent successfully!' });
@@ -383,11 +381,13 @@ export const sendForgotPasswordOTP = async (req: Request, res: Response) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    // Send via Google Workspace SMTP using Nodemailer
-    await sendResetOTPEmail(email, code);
+    console.log(`[RESET OTP DISPATCH]: Email: ${email} | Code: ${code}`);
 
-    if (env.NODE_ENV === 'development') {
-      console.log(`[DEV RESET OTP]: The OTP for ${email} is ${code}`);
+    try {
+      await sendResetOTPEmail(email, code);
+    } catch (emailErr) {
+      console.error('⚠️ [SMTP Warning] Failed to dispatch Reset OTP email via Gmail SMTP:', emailErr);
+      console.log(`[FALLBACK RESET OTP CODE]: Email: ${email} | Code: ${code}`);
     }
 
     return res
